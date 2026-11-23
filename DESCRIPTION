@@ -1,0 +1,25 @@
+Package: correctedWS
+Type: Package
+Title: Corrected Welch-Satterthwaite Degrees of Freedom
+Version: 0.1.0
+Authors@R: person("Matthias", "von Davier", email = "mvondavier@gmail.com",
+    role = c("aut", "cre"))
+Description: Calculates corrected Welch-Satterthwaite effective degrees of
+    freedom for weighted sums of independent variance components. Provides
+    corrected-default one-sample, paired, and two-sample t-tests, together
+    with the classical Welch-Satterthwaite calculation for explicit
+    comparison.
+License: CC0
+URL: https://github.com/cycologist/Corrected-Welch-Satterthwaite
+BugReports: https://github.com/cycologist/Corrected-Welch-Satterthwaite/issues
+Encoding: UTF-8
+RoxygenNote: 7.3.3
+NeedsCompilation: no
+Imports: stats
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
+Packaged: 2026-11-03 12:11:15 UTC; matthias
+Author: Matthias von Davier [aut, cre]
+Maintainer: Matthias von Davier <mvondavier@gmail.com>
+Repository: CRAN
+Date/Publication: 2026-11-23 15:00:21 UTC

@@ -1,0 +1,17 @@
+d3fcd8414e57bdcfa4b748758b56e500 *DESCRIPTION
+22111e71bbd93ed1e7bb4d83b9fe7c90 *NAMESPACE
+98f003ec58b7e6f5b54bcee9d12a2893 *NEWS.md
+1cf5aea8b748ea1a676fb6f6a351c699 *R/corrected_t_test.R
+dbebb371b4be47f08b890a1aeb51edf7 *R/cws.R
+ef23b657457331839a414cdddc4a114c *README.md
+fa96d4098f9583951176130d6ddf554e *build/vignette.rds
+397b369e9ea96626759a805e7e04c8fc *inst/doc/corrected-welch-satterthwaite.R
+e43f3fd5f065eed395cd8ad30d25d968 *inst/doc/corrected-welch-satterthwaite.Rmd
+953b7877e9afda6b4bacac912bf2b1ca *inst/doc/corrected-welch-satterthwaite.html
+12529295daf1a2ce8beb55cd8611e12c *man/correctedWS-package.Rd
+7b960ce52e2a858da54dc0ef6a96a717 *man/corrected_t_test.Rd
+172fd5054515f2cdd9461d579c8d3384 *man/cws.Rd
+9a0557c8407ca8041d498ed549ab2847 *man/cws2.Rd
+3396b7808896bf108e833af615c8b4ae *man/ws_classical.Rd
+ccf11c0f88a180271543e298b723b4ef *tests/test-functions.R
+e43f3fd5f065eed395cd8ad30d25d968 *vignettes/corrected-welch-satterthwaite.Rmd

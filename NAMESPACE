@@ -1,0 +1,8 @@
+# Generated manually for the initial package prototype.
+export(cws)
+export(cws2)
+export(corrected_t_test)
+export(ws_classical)
+importFrom(stats, pt)
+importFrom(stats, qt)
+importFrom(stats, var)

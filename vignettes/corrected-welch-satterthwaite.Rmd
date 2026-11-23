@@ -1,0 +1,263 @@
+---
+title: "Corrected Welch--Satterthwaite Degrees of Freedom"
+author: "Matthias von Davier"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Corrected Welch--Satterthwaite Degrees of Freedom}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 6,
+  fig.height = 4
+)
+library(correctedWS)
+```
+
+# Overview
+
+The `correctedWS` package calculates corrected Welch--Satterthwaite
+effective degrees of freedom for weighted sums of independent variance
+components. It also provides `corrected_t_test()`, a t-test interface whose
+default unequal-variance two-sample calculation uses the corrected degrees of
+freedom.
+
+The package is deliberately separate from `stats::t.test()`. Existing base R
+code therefore keeps its established behavior, while users can explicitly
+choose the corrected method through this package. The classical calculation
+is retained as an opt-in comparison method.
+
+The correction and its derivation are described by von Davier (2026),
+[*A Corrected Welch Satterthwaite Equation*](https://arxiv.org/abs/2602.20912).
+
+# The corrected estimator
+
+Suppose that
+
+$$
+S^2 = \sum_{k=1}^{K} w_k S_k^2,
+$$
+
+where the variance components are independent, the weights satisfy
+$w_k > 0$, and
+
+$$
+\frac{\nu_k S_k^2}{\sigma_k^2} \sim \chi^2_{\nu_k}.
+$$
+
+The corrected estimator is
+
+$$
+\nu^*_{vD} =
+\frac{\left(\sum_{k=1}^{K} w_k S_k^2\right)^2}
+     {\sum_{k=1}^{K} w_k^2 \left(S_k^2\right)^2/(\nu_k+2)} - 2.
+$$
+
+In R, the vector form is:
+
+```{r formula}
+s2 <- c(2, 3)
+nu <- c(10, 20)
+w <- c(1, 2)
+
+num <- sum(w * s2)
+den <- sum(w^2 * s2^2 / (nu + 2))
+num^2 / den - 2
+cws(s2, nu, w)
+```
+
+The two results are identical. The arguments `s2` are variance components,
+not standard deviations. If standard deviations are available, square them
+before calling `cws()`.
+
+# Basic usage
+
+## Multiple variance components
+
+`cws()` accepts vectors of variance components, component degrees of freedom,
+and positive weights. Equal weights are used when `w` is omitted.
+
+```{r cws-examples}
+cws(c(2, 3), c(10, 20))
+cws(c(2, 3), c(10, 20), w = c(1, 2))
+cws(c(1, 2, 3), c(5, 10, 15), w = c(1, 2, 3))
+```
+
+Multiplying every weight by the same positive constant does not change the
+result, because the common factor cancels between numerator and denominator:
+
+```{r weight-invariance}
+cws(c(2, 3), c(10, 20), w = c(1, 2))
+cws(c(2, 3), c(10, 20), w = c(2, 4))
+```
+
+## Two variance components
+
+`cws2()` is a convenience wrapper for the two-component case:
+
+```{r cws2-examples}
+cws2(2, 3, 10, 20)
+cws2(4, 9, 5, 8, w1 = 2, w2 = 3)
+```
+
+The default weights are one and one.
+
+## Input rules
+
+The functions require:
+
+* at least one variance component;
+* `s2`, `nu`, and `w` to have the same length;
+* non-negative `s2` values;
+* positive `nu` values;
+* positive `w` values; and
+* finite numeric inputs.
+
+If the denominator is zero, as when every variance component is zero, the
+functions return `NA_real_`.
+
+# Corrected versus classical Welch--Satterthwaite
+
+The classical estimator is
+
+$$
+\nu^*_{WS} =
+\frac{\left(\sum_{k=1}^{K} w_k S_k^2\right)^2}
+     {\sum_{k=1}^{K} w_k^2 \left(S_k^2\right)^2/\nu_k}.
+$$
+
+It uses $\nu_k$ rather than $\nu_k+2$ and does not subtract 2. The package
+keeps this calculation available through `ws_classical()`:
+
+```{r comparison}
+s2 <- c(1, 1)
+nu <- c(1, 2)
+
+cws(s2, nu)
+ws_classical(s2, nu)
+```
+
+The corrected and classical methods are close when the component degrees of
+freedom are large, but can differ substantially for small component degrees
+of freedom.
+
+# Corrected-default t-tests
+
+For an independent unequal-variance two-sample test, let
+
+$$
+S_1^2 = \frac{s_1^2}{n_1},\qquad
+S_2^2 = \frac{s_2^2}{n_2},\qquad
+\nu_1 = n_1-1,\qquad
+\nu_2 = n_2-1.
+$$
+
+The standard error is $\sqrt{S_1^2+S_2^2}$. `corrected_t_test()` uses the
+corrected estimator for the denominator degrees of freedom by default:
+
+```{r t-test-example}
+set.seed(20261103)
+x <- rnorm(20, mean = 0, sd = 1)
+y <- rnorm(12, mean = 0.4, sd = 2)
+
+corrected <- corrected_t_test(x, y)
+classical <- corrected_t_test(x, y, method = "classical")
+
+corrected
+classical
+```
+
+The statistic and standard error are the same in both tests. The degrees of
+freedom, confidence interval, and p-value can differ because the corrected
+and classical approximations use different degrees of freedom.
+
+For comparison, the base-R result continues to be available independently:
+
+```{r base-t-test}
+stats::t.test(x, y)
+```
+
+`corrected_t_test()` also supports one-sample, paired, and pooled two-sample
+tests. The corrected effective-degrees-of-freedom change concerns the
+independent unequal-variance two-sample case; one-sample, paired, and pooled
+tests use their usual degrees of freedom.
+
+# Small simulation illustration
+
+The following compact simulation uses the same data-generating mechanism as
+the repository simulation scripts. Each variance component is generated as
+
+$$
+S_k^2 = \frac{\chi^2_{\nu}}{\nu},
+$$
+
+so its expected value is one and the target effective degrees of freedom is
+$K\nu$. This is an illustration for the vignette, not a replacement for a
+full simulation study.
+
+```{r simulation, results='asis'}
+simulate_cell <- function(K, nu, nsim = 1000L) {
+  draws <- matrix(rchisq(nsim * K, df = nu), nrow = nsim, ncol = K)
+  s2 <- draws / nu
+  estimates <- apply(
+    s2, 1L,
+    function(row) cws(row, nu = rep(nu, K))
+  )
+  target <- K * nu
+
+  data.frame(
+    K = K,
+    nu = nu,
+    target_df = target,
+    mean_df = mean(estimates),
+    bias = mean(estimates) - target,
+    relative_bias = (mean(estimates) - target) / target,
+    rmse = sqrt(mean((estimates - target)^2))
+  )
+}
+
+set.seed(20261103)
+simulation <- do.call(
+  rbind,
+  lapply(c(1, 3, 10), function(nu) {
+    do.call(rbind, lapply(c(2, 10, 40), simulate_cell,
+                          nu = nu, nsim = 1000L))
+  })
+)
+
+simulation
+```
+
+The usual pattern is that relative bias is more visible for small `nu` and
+becomes smaller as the component degrees of freedom increase. Monte Carlo
+results will vary with the random seed and number of replications.
+
+# Relationship to existing R functions
+
+Base R's `stats::t.test()` uses the classical Welch--Satterthwaite
+approximation for its default unequal-variance two-sample test. Packages such
+as `lmerTest` and `pbkrtest` implement Satterthwaite-related methods for
+linear mixed models. `correctedWS` does not override those functions. It
+provides a separate, explicit corrected implementation so that analyses can
+be reproduced and compared without changing the behavior of existing R
+software.
+
+# Submission status
+
+This package is a proposed standalone CRAN package. Before submission, the
+package should be checked with current R release, R-patched, and preferably
+R-devel, including platform checks such as win-builder. The source package
+should then be submitted through the [CRAN submission
+form](https://CRAN.R-project.org/submit.html). See the repository-level
+`cran-comments.md` for additional submission notes.
+
+# References
+
+von Davier, M. (2026). *A Corrected Welch Satterthwaite Equation. And: What
+You Always Wanted to Know About Kish's Effective Sample but Were Afraid to
+Ask*. arXiv:2602.20912. <https://arxiv.org/abs/2602.20912>
